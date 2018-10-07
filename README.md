@@ -1,2 +1,2 @@
 # computational_thermodynamics
-small programs and script to perform simple Td simulations
+Small programs and script to perform simple Td simulations
