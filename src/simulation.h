@@ -208,7 +208,7 @@ struct SimulationSttings {
 
 //-------------------------------------------------------------------------------------------------
 
-class Simulation { // TODO reorganize in alphabetic order
+class Simulation { // TODO reorganize
 public:
 	//Simulation(float gasParticleNumber, double temperature);// TODO to complete
 
@@ -231,13 +231,14 @@ public:
     //bool loadContainer(std::string);
 
 private:
-	bool isInsideVolume(Vector3, int) const;//const;// (point, volume index)
+	bool isInsideVolume(Vector3, int) const;// (point, volume index)
 	bool isInside2dTriangle(Triangle2, Vector2) const;
 	Box boundingBox(Volume) const;
-	Box boundingBox(int) const;
+	Box boundingBox(int) const;// (volume index)
 	std::vector<int> volumesContainingVector(Vector3) const;
 	double potential(Vector3) const;
 	bool isInAllowedVolume(Vector3) const;
+	bool simulateInTimeInterval(double);// (dt)
 	
 	double temperature = 1;
 	double GasParticleNumber = 10;

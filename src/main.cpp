@@ -70,7 +70,7 @@ bool loadObjFile(objl::Loader* loader, std::string fileName) {
 
 bool loadVolumes(objl::Loader loader, Simulation* simulation, std::vector<double> potentials)
 {
-	//TODO check for the validity of meshes and potentials
+	// TODO check for the validity of meshes and potentials
 
 	//std::cout << "ciaoooooooooooooooooooooooo " << loader.LoadedMeshes.size()  << std::endl;//TODO delete
 
@@ -82,7 +82,7 @@ bool loadVolumes(objl::Loader loader, Simulation* simulation, std::vector<double
 		Mesh currVolumeMesh;
 		Volume currVolume;
 
-		//TODO to implement
+		//TODO to implement// ma cosa???????????? forse è già fatto
 		
 		// load a mesh
 		currMesh = loader.LoadedMeshes[i];

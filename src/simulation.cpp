@@ -87,7 +87,7 @@ bool Simulation::createGasParticles(void)
 			newPoint.position.Z = fRand(box.min.Z, box.max.Z);
 
 			newPoint.potential = potential(newPoint.position);
-		} while ((newPoint.potential >= 0) || !isInAllowedVolume(newPoint.position));// TODO qui c'è un errore!!!!!!!!!!!!! o frse è stato corretto o forse no?!?!?!?
+		} while ((newPoint.potential >= 0) || !isInAllowedVolume(newPoint.position));// TODO qui c'è un errore!!!!!!!!!!!!! o forse è stato corretto o forse no?!?!?!?
 		// assign random speed
 		rand = fRand(- temperature * 2.0 / 3.0, temperature * 2.0 / 3.0); // energy along x direction (signed)
 		newPoint.speed.X = (double)sign(rand) * (double)sqrt (2.0 * abs(rand));
@@ -103,6 +103,15 @@ bool Simulation::createGasParticles(void)
 		*/
 	}
 	return true;
+}
+
+// run simulation for one step, then pause
+bool Simulation::performOneStep(void)// TODO
+{
+	/*
+	call the function that simulates from now to the now+dt time
+	*/
+	return false;
 }
 
 
@@ -246,6 +255,20 @@ bool Simulation::isInside2dTriangle(Triangle2 triangle, Vector2 point) const
 	return false;
 }
 
+// simulate over time interval dt
+bool Simulation::simulateInTimeInterval(double)// TODO
+{
+	/*
+	create a struct that identifies the first event and its informations (simEvent)
+	call the funcion to find this event
+	if there is an event, then perform first event.
+	apply space and (in case) speed variations, then if the time of the first event < dt,
+	then call this function in the new interval = dt - first event time
+	*/
+	
+	return false;
+}
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 void Simulation::printVertex(int volumeIndex) const
@@ -279,7 +302,6 @@ void Simulation::printPlanes(int volumeIndex) const
 		}/*
 		for (int i = 0; i < volumes[volumeIndex].mesh.Indices.size(); i++)
 			std::cout << volumes[volumeIndex].mesh.Indices[i] << std::endl;*///TODO delete, only for test
-		// TODO remove those
 	}
 	else
 	{
