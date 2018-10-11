@@ -176,6 +176,10 @@ struct Volume {
 	bool isActive = true;
 	double deltaPotential = 0;
 	Mesh mesh;
+	/*it would e grate if we could assign a variable potential in the form
+	a*x + b*y + c*z + d, but it would add more unnecessary complexity to the program and it will slow down the simulation a lot,
+	maybe I'll do this in a future version
+	*/
 };
 
 struct GasParticle {
@@ -188,6 +192,7 @@ struct GasParticle {
 
 struct SimulationSttings {
     double dt = 0.01;// max step dt
+	double gasRadius = 0.001;// particles will collide when distance = 2 * gasRadius
     double finalTime = -1;// simulation end time, -1 to disable
     int maxStepNumber = 10;// maximum number of simulation steps
     double gasTemperature = 1;// average of points' kinetic energy
@@ -215,6 +220,7 @@ public:
 	void setInitialTemperature(double);
 	double getInitialTemperature(void) const;
 	bool createGasParticles(void);
+	bool performOneStep(void);
 
 	//TODO delete these functions...
 	void printVertex(int) const;
