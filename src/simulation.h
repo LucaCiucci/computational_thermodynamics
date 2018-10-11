@@ -191,12 +191,12 @@ struct GasParticle {
 
 
 struct SimulationSttings {
-    double dt = 0.01;// max step dt
+	double dt = 0.01;// max step dt
 	double gasRadius = 0.001;// particles will collide when distance = 2 * gasRadius
-    double finalTime = -1;// simulation end time, -1 to disable
-    int maxStepNumber = 10;// maximum number of simulation steps
-    double gasTemperature = 1;// average of points' kinetic energy
-    int gasPointsNumber = 10;
+	double finalTime = -1;// simulation end time, -1 to disable
+	int maxStepNumber = 10;// maximum number of simulation steps
+	double gasTemperature = 1;// average of points' kinetic energy
+	int gasPointsNumber = 10;
     // TODO expand if necessary...
 };
 
