@@ -12,6 +12,8 @@
 
 #include <iostream>
 
+// TODO rearrange
+
 struct Vector2
 {
 	// Default Constructor
@@ -190,9 +192,10 @@ struct GasParticle {
 
 
 
-struct SimulationSttings {
+struct SimulationSettings {
 	double dt = 0.01;// max step dt
 	double gasRadius = 0.001;// particles will collide when distance = 2 * gasRadius
+	double sbRadius = 0.001;// radius of the softbody particles
 	double finalTime = -1;// simulation end time, -1 to disable
 	int maxStepNumber = 10;// maximum number of simulation steps
 	double gasTemperature = 1;// average of points' kinetic energy
@@ -200,6 +203,22 @@ struct SimulationSttings {
     // TODO expand if necessary...
 };
 
+enum class EventType {
+	gasGasCollision,
+	gasMeshCollision,
+	gasSbCollision,
+	sbSbCollision,
+	none
+};
+
+struct SimEvent {
+	double relTime = 0.0;
+	EventType eventType = EventType::none;
+	int index1;// index of the first object (gas or sb)
+	int index2;// index of the second object
+	Vector3 position1;
+	Vector3 position2;
+};
 
 
 
@@ -210,7 +229,7 @@ struct SimulationSttings {
 
 class Simulation { // TODO reorganize
 public:
-	//Simulation(float gasParticleNumber, double temperature);// TODO to complete
+	//Simulation(int gasParticleNumber, double temperature);// TODO to complete
 
 	bool addVolume(Volume);
 	void ciao1(void) const { std::cout << "\nCiao dalla SIMULAZIONE!!!\n"; }// 1!!!!!!!!!!!!!!!!!!!!!!!1
@@ -227,21 +246,26 @@ public:
 	void printPlanes(int) const;
 	void printPoints(void) const;
 	void test(void) const;
-	//bool loadObjData(std::string);// load obj file
-    //bool loadContainer(std::string);
 
 private:
 	bool isInsideVolume(Vector3, int) const;// (point, volume index)
-	bool isInside2dTriangle(Triangle2, Vector2) const;
+	bool isInside2dTriangle(Triangle2, Vector2) const;// TODO generalize for 3d triangle, too
 	Box boundingBox(Volume) const;
 	Box boundingBox(int) const;// (volume index)
 	std::vector<int> volumesContainingVector(Vector3) const;
 	double potential(Vector3) const;
 	bool isInAllowedVolume(Vector3) const;
 	bool simulateInTimeInterval(double);// (dt)
+	SimEvent findFirstEvent(double) const;
+	SimEvent findGasMeshEvent(double) const;
+	SimEvent findFirstContainerCollision(int, double) const;
+	SimEvent findFirstTriangleCollision(int, int, double) const;
+	SimEvent findTriangleCollision(int, int, int, double) const;
+	
 	
 	double temperature = 1;
 	double GasParticleNumber = 10;
+	SimulationSettings simSettings;
 	std::vector<Volume> volumes;
 	std::vector<GasParticle> gasParticles;
     
