@@ -32,21 +32,25 @@ int main(/*int argc, char *argv[]*/)
 
 	simulation.ciao1();
 	std::cout << "ciao da questa build\t\n";
-	/*std::cout <<*/ bool loadout = loadObjFile(&loader, "box_stack.obj"/*"a.obj"*/);
+	if (!loadObjFile(&loader, "box_stack.obj"/*"a.obj"*/))// bool loadout =
+	{
+		std::cout << "OBJ loading FAIL!!!" << std::endl;
+		return 0;
+	}
 	//std::cout << loadout << std::endl;
 	//std::cout << loader.LoadedMeshes.size() << std::endl;
 	//std::cout << loader.LoadedMeshes[0].MeshName << std::endl;
 	loadVolumes(loader, &simulation, potentials);
 	std::cout << "Number of Volumes: " << simulation.getVolumesNumber() << std::endl;
 	std::cout << std::endl;
-	simulation.printVertex(0);
-	simulation.printPlanes(0);
+	simulation.printVertex(0);// useful
+	simulation.printPlanes(0);// useful
 	std::cout << "\n\n\n\n\n";
 	simulation.setGasParticleNumber(10);
 	simulation.setInitialTemperature(1);
 	simulation.createGasParticles();
 	//simulation.test();
-	simulation.printPoints();
+	simulation.printPoints();// useful
 	return 0;
 }
 

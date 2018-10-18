@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulation.h"
+
 constexpr double Epsilon = 0.000000001;
 
 int sign(double x);/* {
@@ -15,3 +17,6 @@ double fRand(double fMin, double fMax);/*
 	return fMin + f * (fMax - fMin);
 	
 }*/
+
+double abs(Vector3);// TODO
+double abs(Vector2);// TODO

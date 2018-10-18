@@ -251,6 +251,9 @@ bool Simulation::isInsideVolume(Vector3 point, int volumeIndex) const // TODO op
 // used inside the isInsideVolume() funcion
 bool Simulation::isInside2dTriangle(Triangle2 triangle, Vector2 point) const
 {
+	// TODO this commented part can be deleted, looks like the usage of isInside3dTriangle()
+	// works fine, but check another time before deleting
+	/*
 	double triangleArea = abs( (triangle.v2 - triangle.v1) % (triangle.v3 - triangle.v1) );
 	double subArea1 = abs((point - triangle.v1) % (point - triangle.v2));
 	double subArea2 = abs((point - triangle.v2) % (point - triangle.v3));
@@ -260,6 +263,33 @@ bool Simulation::isInside2dTriangle(Triangle2 triangle, Vector2 point) const
 	if ((subArea1 + subArea2 + subArea3 - triangleArea) <= Epsilon) // approximation may cause areas not to coincide perfectly
 		return true;
 	return false;
+	*/
+	return isInside3dTriangle(triangle2dTo3d(triangle), vector2dTo3d(point));
+}
+
+bool Simulation::isInside3dTriangle(Triangle3 triangle, Vector3 point) const
+{
+	double triangleArea = abs((triangle.v2 - triangle.v1) % (triangle.v3 - triangle.v1));
+	double subArea1 = abs((point - triangle.v1) % (point - triangle.v2));
+	double subArea2 = abs((point - triangle.v2) % (point - triangle.v3));
+	double subArea3 = abs((point - triangle.v3) % (point - triangle.v1));
+
+	//if the areas are equal, then th point is inside the triangle
+	if ((subArea1 + subArea2 + subArea3 - triangleArea) <= Epsilon) // approximation may cause areas not to coincide perfectly
+		return true;
+	return false;
+}
+
+// takes a 2d triangle and retun the corrisponding 3d triangle (with z = 0)
+Triangle3 Simulation::triangle2dTo3d(Triangle2 triangle) const
+{
+	Triangle3 _triangle = { vector2dTo3d(triangle.v1), vector2dTo3d(triangle.v2), vector2dTo3d(triangle.v3) };
+	return _triangle;// TODO temporary variable not necessary
+}
+
+Vector3 Simulation::vector2dTo3d(Vector2 vector) const
+{
+	return {vector.X, vector.Y, 0.0};
 }
 
 // TODO
@@ -344,7 +374,7 @@ SimEvent Simulation::findFirstTriangleCollision(int gasPointIndex, int volumeInd
 SimEvent Simulation::findTriangleCollision(int gasPointIndex, int volumeIndex, int triangleIndex, double dt) const
 {
 	GasParticle particle = gasParticles[gasPointIndex];
-	GasParticle particleF = particle;//particle at the final position, excluding collisions
+	GasParticle particleF = particle;// particle at the final position, excluding collisions
 	Plane plane = volumes[volumeIndex].mesh.plane[triangleIndex];
 	// TODO add triangle object
 	particleF.position = particleF.position + particleF.speed * dt;
@@ -363,9 +393,40 @@ SimEvent Simulation::findTriangleCollision(int gasPointIndex, int volumeIndex, i
 			return SimEvent();
 		// ...and where
 		Vector3 collisionPosition = particle.position + particle.speed * collisionRelativeTime;
+
+		Triangle3 triangle;
+		triangle =
+		{
+			{
+				volumes[volumeIndex].mesh.Vertices[volumes[volumeIndex].mesh.Indices[3 * triangleIndex + 0]].Position.X,
+				volumes[volumeIndex].mesh.Vertices[volumes[volumeIndex].mesh.Indices[3 * triangleIndex + 0]].Position.Y,
+				volumes[volumeIndex].mesh.Vertices[volumes[volumeIndex].mesh.Indices[3 * triangleIndex + 0]].Position.Z
+			},
+			{
+				volumes[volumeIndex].mesh.Vertices[volumes[volumeIndex].mesh.Indices[3 * triangleIndex + 1]].Position.X,
+				volumes[volumeIndex].mesh.Vertices[volumes[volumeIndex].mesh.Indices[3 * triangleIndex + 1]].Position.Y,
+				volumes[volumeIndex].mesh.Vertices[volumes[volumeIndex].mesh.Indices[3 * triangleIndex + 1]].Position.Z
+			},
+			{
+				volumes[volumeIndex].mesh.Vertices[volumes[volumeIndex].mesh.Indices[3 * triangleIndex + 2]].Position.X,
+				volumes[volumeIndex].mesh.Vertices[volumes[volumeIndex].mesh.Indices[3 * triangleIndex + 2]].Position.Y,
+				volumes[volumeIndex].mesh.Vertices[volumes[volumeIndex].mesh.Indices[3 * triangleIndex + 2]].Position.Y
+			}
+		};
 		// then check if it is inside the triangle
-		// TODO CONTINUA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		// then calculate collion parameters
+		if (isInside3dTriangle(triangle, collisionPosition))
+		{
+			SimEvent collision;
+			collision.relTime = collisionRelativeTime;
+			collision.eventType = EventType::gasMeshCollision;
+			collision.index1 = gasPointIndex;// index of the particle
+			collision.index2 = volumeIndex;// index of the volume
+			collision.index3 = triangleIndex;// index of the triangle
+			collision.position1 = collision.position2 = collisionPosition;
+
+			return collision;
+		}
+		// then calculate collion parameters // TODO NOT NECESSARY!
 	}
 	return SimEvent();
 }

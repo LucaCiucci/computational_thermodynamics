@@ -215,7 +215,8 @@ struct SimEvent {
 	double relTime = 0.0;
 	EventType eventType = EventType::none;
 	int index1;// index of the first object (gas or sb)
-	int index2;// index of the second object
+	int index2;// index of the second object (gas or volume)
+	int index3;// index of the subobjec (i.e. triangle index in the index2 volume)
 	Vector3 position1;
 	Vector3 position2;
 };
@@ -250,6 +251,9 @@ public:
 private:
 	bool isInsideVolume(Vector3, int) const;// (point, volume index)
 	bool isInside2dTriangle(Triangle2, Vector2) const;// TODO generalize for 3d triangle, too
+	bool isInside3dTriangle(Triangle3, Vector3) const;
+	Triangle3 triangle2dTo3d(Triangle2) const;
+	Vector3 vector2dTo3d(Vector2) const;
 	Box boundingBox(Volume) const;
 	Box boundingBox(int) const;// (volume index)
 	std::vector<int> volumesContainingVector(Vector3) const;
