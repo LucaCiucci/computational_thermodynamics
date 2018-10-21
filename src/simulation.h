@@ -257,17 +257,17 @@ public:
 	int getGasParticleNumber(void) const;
 	void setInitialTemperature(double);
 	double getInitialTemperature(void) const;
-	bool createGasParticles(void);
-	bool performOneStep(void);
 	double getDt(void) const;
 	bool setDt(double);
+	bool createGasParticles(void);
+	bool performOneStep(void);
 
 	//TODO delete these functions...
 	void printVertex(int) const;
 	void printPlanes(int) const;
 	void printPoints(void) const;
 	void test(void) const;
-	void printxyz(void) const;
+	void printxyz(int) const;
 
 private:
 	bool isInsideVolume(Vector3, int) const;// (point, volume index)

@@ -16,6 +16,10 @@ void Simulation::setInitialTemperature(double _temperature) { temperature = _tem
 
 double Simulation::getInitialTemperature(void) const { return temperature; }
 
+double Simulation::getDt(void) const { return simSettings.dt; }
+
+bool Simulation::setDt(double dt) { simSettings.dt = dt; return true; }
+
 //-------------------------------------------------------------------------------------------------
 
 bool Simulation::addVolume(Volume volume)
@@ -116,9 +120,6 @@ bool Simulation::performOneStep(void)// TODO
 	return false;
 }
 
-double Simulation::getDt(void) const { return simSettings.dt; }
-bool Simulation::setDt(double dt) { simSettings.dt = dt; return true; }
-;
 
 // TODO
 // TODO perchè non va bene?!?!?!
@@ -331,7 +332,7 @@ SimEvent Simulation::findFirstEvent(double dt) const
 		firstSimEvent = newSimEvent;*/
 	
 
-	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime < dt))
+	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime <= dt))
 		return firstSimEvent;
 	return SimEvent();
 }
@@ -340,14 +341,14 @@ SimEvent Simulation::findFirstEvent(double dt) const
 SimEvent Simulation::findGasMeshEvent(double dt) const
 {
 	SimEvent firstSimEvent, newSimEvent;
-	firstSimEvent.relTime = simSettings.dt * 2.0;
+	firstSimEvent.relTime = dt * 2.0;
 	for (int i = 0; i < gasParticles.size(); i++)
 	{
 		newSimEvent = findFirstContainerCollision(i, dt);
 		if ( (newSimEvent.relTime > 0.0) && ( newSimEvent.relTime < firstSimEvent.relTime ) )
 			firstSimEvent = newSimEvent;
 	}
-	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime < dt))
+	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime <= dt))
 		return firstSimEvent;
 	return SimEvent();
 }
@@ -356,7 +357,7 @@ SimEvent Simulation::findGasMeshEvent(double dt) const
 SimEvent Simulation::findFirstContainerCollision(int gasPointIndex, double dt) const
 {
 	SimEvent firstSimEvent, newSimEvent;
-	firstSimEvent.relTime = simSettings.dt * 2.0;
+	firstSimEvent.relTime = dt * 2.0;
 	for (int i = 0; i < volumes.size(); i++)
 	{
 		// if ti is an interesting volume only
@@ -367,7 +368,7 @@ SimEvent Simulation::findFirstContainerCollision(int gasPointIndex, double dt) c
 				firstSimEvent = newSimEvent;
 		}
 	}
-	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime < dt))
+	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime <= dt))
 		return firstSimEvent;
 	return SimEvent();
 }
@@ -382,7 +383,7 @@ SimEvent Simulation::findFirstTriangleCollision(int gasPointIndex, int volumeInd
 		if ((newSimEvent.relTime > 0.0) && (newSimEvent.relTime < firstSimEvent.relTime))
 			firstSimEvent = newSimEvent;
 	}
-	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime < dt))
+	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime <= dt))
 		return firstSimEvent;
 	return SimEvent();
 }
@@ -456,7 +457,7 @@ bool Simulation::performEvent(SimEvent simEvent)
 	switch (eventType)
 	{
 	case EventType::gasMeshCollision:
-		//Beep(2000, 100);
+		//Beep(1000, 100);
 		preformGasMeshCollision(simEvent);
 		break;// TODO
 	case EventType::gasGasCollision:
@@ -506,6 +507,7 @@ bool Simulation::preformGasMeshCollision(SimEvent simEvent)
 	{
 		vSpeedN = vSpeedN / abs(vSpeedN) * sqrt(2.0 * (cEnergyN - dPotential));// particle loses energy if dPotential > 0
 		particle.speed = vSpeedN + otherComponent;
+		particle.potential = externPotential;
 	}
 	particle.position = simEvent.position1 + particle.speed * (dt * Epsilon);
 	gasParticles[simEvent.index1] = particle;
@@ -615,9 +617,10 @@ void Simulation::test(void) const
 	
 }
 
-void Simulation::printxyz(void) const
+void Simulation::printxyz(int i) const
 {
-	std::cout << gasParticles[0].position.X << ", "
-		<< gasParticles[0].position.Y << ", "
-		<< gasParticles[0].position.Z << std::endl;
+	std::cout
+		<< gasParticles[i].position.X << ", "
+		<< gasParticles[i].position.Y << ", "
+		<< gasParticles[i].position.Z << std::endl;
 }
