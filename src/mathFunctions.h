@@ -2,7 +2,7 @@
 
 #include "simulation.h"
 
-constexpr double Epsilon = 0.000000001;
+constexpr double Epsilon = 0.000001;
 
 int sign(double x);/* {
 	if (x == 0) return 0;

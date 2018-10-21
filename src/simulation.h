@@ -55,9 +55,9 @@ struct Vector2
 	}
 
 	// Scalar Product Operator Overload
-	Vector2 operator*(const Vector2& right) const
+	double operator*(const Vector2& right) const
 	{
-		return Vector2(this->X * right.X, this->Y * right.Y);
+		return double(this->X * right.X + this->Y * right.Y);
 	}
 	// Vectorial Product Operator Overload
 	double operator%(const Vector2& right) const
@@ -65,6 +65,12 @@ struct Vector2
 		return double(this->X*right.Y - this->Y*right.X);
 	}
 
+	// Addition Operator Overload
+	void operator+=(const Vector2& right)
+	{
+		this->X += right.X;
+		this->Y += right.Y;
+	}
 	// Positional Variables
 	double X;
 	double Y;
@@ -118,14 +124,26 @@ struct Vector3
 	}
 	
 	// Scalar Product Operator Overload
-	Vector3 operator*(const Vector3& right) const
+	double operator*(const Vector3& right) const
 	{
-		return Vector3(this->X * right.X, this->Y * right.Y, this->Z * right.Z);
+		return double(this->X * right.X + this->Y * right.Y + this->Z * right.Z);
 	}
 	// Vectorial Product Operator Overload
 	Vector3 operator%(const Vector3& right) const
 	{
 		return Vector3(this->Y*right.Z - this->Z*right.Y, this->Z*right.X - this->X*right.Z, this->X*right.Y - this->Y*right.X);
+	}
+	// Addition Operator Overload
+	void operator+=(const Vector3& right)
+	{
+		this->X += right.X;
+		this->Y += right.Y;
+		this->Z += right.Z;
+	}
+	// Oposite
+	Vector3 operator-(void) const
+	{
+		return Vector3(-this->X, -this->Y, -this->Z);
 	}
 
 	// Positional Variables
@@ -241,12 +259,15 @@ public:
 	double getInitialTemperature(void) const;
 	bool createGasParticles(void);
 	bool performOneStep(void);
+	double getDt(void) const;
+	bool setDt(double);
 
 	//TODO delete these functions...
 	void printVertex(int) const;
 	void printPlanes(int) const;
 	void printPoints(void) const;
 	void test(void) const;
+	void printxyz(void) const;
 
 private:
 	bool isInsideVolume(Vector3, int) const;// (point, volume index)
@@ -265,6 +286,11 @@ private:
 	SimEvent findFirstContainerCollision(int, double) const;
 	SimEvent findFirstTriangleCollision(int, int, double) const;
 	SimEvent findTriangleCollision(int, int, int, double) const;
+	//SimEvent findGasGasEvent(double) const;
+	bool performEvent(SimEvent);
+	bool preformGasMeshCollision(SimEvent);
+	bool gasPositionIncrement(double, int);
+	bool performNullEvent(SimEvent);
 	
 	
 	double temperature = 1;
