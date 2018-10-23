@@ -287,10 +287,10 @@ private:
 	SimEvent findFirstTriangleCollision(int, int, double) const;
 	SimEvent findTriangleCollision(int, int, int, double) const;
 	//SimEvent findGasGasEvent(double) const;
-	bool performEvent(SimEvent);
+	bool performEvent(SimEvent, double);
 	bool preformGasMeshCollision(SimEvent);
 	bool gasPositionIncrement(double, int);
-	bool performNullEvent(SimEvent);
+	bool performNullEvent(SimEvent, double);
 	
 	
 	double temperature = 1;

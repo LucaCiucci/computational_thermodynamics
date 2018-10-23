@@ -303,13 +303,13 @@ Vector3 Simulation::vector2dTo3d(Vector2 vector) const
 // simulate over time interval dt
 bool Simulation::simulateInTimeInterval(double dt)// TODO
 {
-	
+	//std::cout << "DT == " << dt << std::endl;
 	// create a struct that identifies the first event and its informations (simEvent)
 	SimEvent firstSimEvent;
 	// call the funcion to find this event
 	firstSimEvent = findFirstEvent(dt);
 	// if there is an event, then perform first event and apply space and (in case) speed variations
-	performEvent(firstSimEvent);
+	performEvent(firstSimEvent, dt);
 	// then if the time of the first event < dt,
 	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime < dt))
 		// then call this function in the new interval = dt - first event time
@@ -408,7 +408,7 @@ SimEvent Simulation::findTriangleCollision(int gasPointIndex, int volumeIndex, i
 		double collisionRelativeTime = -( particle.position.X * plane.a + particle.position.Y * plane.b + particle.position.Z * plane.c + plane.d )
 			/ ( particle.speed.X * plane.a + particle.speed.Y * plane.b + particle.speed.Z * plane.c );
 		// if it appens before dt, then continue! (or it would be useless to calculate the remaining collision parameters (so return the defalult SimEvent()))
-		if ( ( collisionRelativeTime > dt ) || ( collisionRelativeTime <= 0.0 ) )// TODO < o <=???// < because if the step end exactly when there is a collision wi would copute it in the nex step
+		if ( ( collisionRelativeTime > dt ) || ( collisionRelativeTime < 0.0 ) )// TODO < o <=???// < because if the step end exactly when there is a collision wi would copute it in the nex step
 			return SimEvent();
 		// ...and where
 		Vector3 collisionPosition = particle.position + particle.speed * collisionRelativeTime;
@@ -451,7 +451,7 @@ SimEvent Simulation::findTriangleCollision(int gasPointIndex, int volumeIndex, i
 	return SimEvent();
 }
 
-bool Simulation::performEvent(SimEvent simEvent)
+bool Simulation::performEvent(SimEvent simEvent, double dt)
 {
 	EventType eventType = simEvent.eventType;
 	switch (eventType)
@@ -467,7 +467,7 @@ bool Simulation::performEvent(SimEvent simEvent)
 	case EventType::sbSbCollision:
 		break;// TODO
 	case EventType::none:
-		performNullEvent(simEvent);
+		performNullEvent(simEvent, dt);
 		break;// TODO
 	default:
 		break;
@@ -484,10 +484,10 @@ bool Simulation::preformGasMeshCollision(SimEvent simEvent)
 	int triangleIndex = simEvent.index3;
 	Plane plane = volumes[volumeIndex].mesh.plane[triangleIndex];
 
-	gasPositionIncrement(simEvent.relTime, simEvent.index1);// increment position except for interested particle
+	gasPositionIncrement(dt, simEvent.index1);// increment position except for interested particle
 	// perform the collision (hard code);
 	// apply movement
-	gasParticles[simEvent.index1].position = simEvent.position1;
+	//gasParticles[simEvent.index1].position = simEvent.position1;
 	// calculate new speed
 	Vector3 planeNormal = { plane.a, plane.b, plane.c };
 	double speedN = particle.speed * planeNormal;// speed component on the triangle normal
@@ -505,12 +505,17 @@ bool Simulation::preformGasMeshCollision(SimEvent simEvent)
 	}
 	else
 	{
+		//////////////////////////////std::cout << ":::::::" << dPotential << std::endl;
 		vSpeedN = vSpeedN / abs(vSpeedN) * sqrt(2.0 * (cEnergyN - dPotential));// particle loses energy if dPotential > 0
 		particle.speed = vSpeedN + otherComponent;
-		particle.potential = externPotential;
+		//particle.potential = externPotential;
 	}
 	particle.position = simEvent.position1 + particle.speed * (dt * Epsilon);
+	particle.potential = potential(particle.position);
 	gasParticles[simEvent.index1] = particle;
+
+	//std::cout << "potenziale del punto: " << potential(gasParticles[simEvent.index1].position) << std::endl;// TODO COME CAVOLO è POSSIBILE CHE RESTITUISCE -100 MENTRE NEL TEST 0?????????????????????
+
 
 	// TODO SB position and speed increment
 	return false;// TODO return true
@@ -527,9 +532,10 @@ bool Simulation::gasPositionIncrement(double dt, int exI = -1)
 	return true;
 }
 
-bool Simulation::performNullEvent(SimEvent simEvent)
+bool Simulation::performNullEvent(SimEvent simEvent, double dt)
 {
-	gasPositionIncrement(getDt());// increment position except for interested particle
+	// TODO so simEvent is not necessary?!?!?!?!?
+	gasPositionIncrement(dt);// increment position except for interested particle
 	// TODO SB position and speed increment
 	return false;
 }
@@ -590,7 +596,8 @@ void Simulation::printPoints(void) const
 			<< gasParticles[i].speed.X << " y = "
 			<< gasParticles[i].speed.Y << " z = "
 			<< gasParticles[i].speed.Z << "              \tenergy: "
-			<< energy << std::endl;
+			<< energy << " \t pot: " <<
+			 gasParticles[i].potential << std::endl;
 		energySum += energy;
 	}
 	std::cout << "\nAverage energy: " << energySum / gasParticles.size() << std::endl;
@@ -615,6 +622,8 @@ void Simulation::test(void) const
 	
 	std::cout << isInside3dTriangle({ v1,v2,v3 }, v) << std::endl;
 	
+	std::cout << "potenziale del punto: " << potential({ -156.756, -156.998, -37.179 }) << std::endl;
+	
 }
 
 void Simulation::printxyz(int i) const
@@ -622,5 +631,7 @@ void Simulation::printxyz(int i) const
 	std::cout
 		<< gasParticles[i].position.X << ", "
 		<< gasParticles[i].position.Y << ", "
-		<< gasParticles[i].position.Z << std::endl;
+		<< gasParticles[i].position.Z << std::endl
+		//<< "pot:  " << gasParticles[i].potential << ", "
+		;
 }

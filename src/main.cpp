@@ -28,12 +28,12 @@ int main(/*int argc, char *argv[]*/)
 
 	objl::Loader loader;
 	Simulation simulation;
-	std::vector<double> potentials = { -100, -100, -100 };
+	std::vector<double> potentials = { -100, 0.3, -100 };
 
 
 	simulation.ciao1();
 	std::cout << "ciao da questa build\t\n";
-	if (!loadObjFile(&loader, "box_stack.obj"/*"a.obj"*/))// bool loadout =
+	if (!loadObjFile(&loader, "c.obj"/*"a.obj"*/))// bool loadout =
 	{
 		std::cout << "OBJ loading FAIL!!!" << std::endl;
 		return 0;
@@ -47,18 +47,18 @@ int main(/*int argc, char *argv[]*/)
 	//simulation.printVertex(0);// useful
 	//simulation.printPlanes(0);// useful
 	std::cout << "\n\n\n\n\n";
-	simulation.setGasParticleNumber(100);
+	simulation.setGasParticleNumber(50);
 	simulation.setInitialTemperature(1);
 	simulation.createGasParticles();
 	simulation.test();
 	simulation.printPoints();// useful
-	simulation.setDt(0.003);
+	simulation.setDt(0.5);
 	for (int i = 0; i < 50000; i++) {
 		simulation.performOneStep();
 		//simulation.printPoints();
 		//std::cout << simulation.getDt() << std::endl;
-		//Sleep(50);
-		simulation.printxyz(0);
+		//Sleep(500);
+		simulation.printxyz(1);
 		//Beep(2000, 50);
 	}
 	return 0;
