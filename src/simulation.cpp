@@ -8,13 +8,25 @@
 
 int Simulation::getVolumesNumber(void) const { return volumes.size(); }
 
-void Simulation::setGasParticleNumber(int _gasParticleNumber) { GasParticleNumber = _gasParticleNumber; }
+void Simulation::setGasParticleNumber(int _gasParticleNumber) { simSettings.gasPointsNumber = _gasParticleNumber; }
 
-int Simulation::getGasParticleNumber(void) const { return GasParticleNumber; }
+int Simulation::getGasParticleNumber(void) const { return simSettings.gasPointsNumber; }
 
-void Simulation::setInitialTemperature(double _temperature) { temperature = _temperature; }
+double Simulation::getAverageKEnergy(void) const
+{
+	double sum = 0.0;
+	for (int i = 0; i < gasParticles.size(); i++) {
+		sum += 
+			gasParticles[i].speed.X * gasParticles[i].speed.X / 2 +
+			gasParticles[i].speed.Y * gasParticles[i].speed.Y / 2 +
+			gasParticles[i].speed.Z * gasParticles[i].speed.Z / 2;
+	}
+	return sum/gasParticles.size();
+}
 
-double Simulation::getInitialTemperature(void) const { return temperature; }
+void Simulation::setInitialTemperature(double _temperature) { simSettings.gasTemperature = _temperature; }
+
+double Simulation::getInitialTemperature(void) const { return simSettings.gasTemperature; }
 
 double Simulation::getDt(void) const { return simSettings.dt; }
 
@@ -83,7 +95,7 @@ bool Simulation::createGasParticles(void)// TODO avoid collisions!
 	GasParticle newPoint;
 	double rand;
 	// creates points in a random position inside the right volumes
-	for (int i = 0; i < GasParticleNumber; i++)
+	for (int i = 0; i < simSettings.gasPointsNumber; i++)
 	{
 		// tries random points until a contained point in the correct position is found
 		do {
@@ -94,11 +106,11 @@ bool Simulation::createGasParticles(void)// TODO avoid collisions!
 			newPoint.potential = potential(newPoint.position);
 		} while ((newPoint.potential >= 0) || !isInAllowedVolume(newPoint.position));// TODO qui c'è un errore!!!!!!!!!!!!! o forse è stato corretto o forse no?!?!?!?
 		// assign random speed
-		rand = fRand(- temperature * 2.0 / 3.0, temperature * 2.0 / 3.0); // energy along x direction (signed)
+		rand = fRand(-simSettings.gasTemperature * 2.0 / 3.0, simSettings.gasTemperature * 2.0 / 3.0); // energy along x direction (signed)
 		newPoint.speed.X = (double)sign(rand) * (double)sqrt (2.0 * abs(rand));
-		rand = fRand(-temperature * 2.0 / 3.0, temperature * 2.0 / 3.0);
+		rand = fRand(-simSettings.gasTemperature * 2.0 / 3.0, simSettings.gasTemperature * 2.0 / 3.0);
 		newPoint.speed.Y = (double)sign(rand) * (double)sqrt(2.0 * abs(rand));
-		rand = fRand(-temperature * 2.0 / 3.0, temperature * 2.0 / 3.0);
+		rand = fRand(-simSettings.gasTemperature * 2.0 / 3.0, simSettings.gasTemperature * 2.0 / 3.0);
 		newPoint.speed.Z = (double)sign(rand) * (double)sqrt(2.0 * abs(rand));
 		// add to the array of gas particles
 		gasParticles.push_back(newPoint);
@@ -116,6 +128,7 @@ bool Simulation::performOneStep(void)// TODO
 	/*
 	call the function that simulates from now to the now+dt time
 	*/
+	calculateBoxes();
 	simulateInTimeInterval(simSettings.dt);
 	return false;
 }
@@ -327,10 +340,10 @@ SimEvent Simulation::findFirstEvent(double dt) const
 	SimEvent newSimEvent = findGasMeshEvent(dt);
 	if ( (newSimEvent.relTime > 0.0) && ( newSimEvent.relTime < firstSimEvent.relTime ) )
 		firstSimEvent = newSimEvent;
-	/*newSimEvent = findGasGasEvent(dt);
+	newSimEvent = findGasGasEvent(dt);
 	if ((newSimEvent.relTime > 0.0) && (newSimEvent.relTime < firstSimEvent.relTime))
-		firstSimEvent = newSimEvent;*/
-	
+		firstSimEvent = newSimEvent;
+
 
 	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime <= dt))
 		return firstSimEvent;
@@ -353,6 +366,21 @@ SimEvent Simulation::findGasMeshEvent(double dt) const
 	return SimEvent();
 }
 
+SimEvent Simulation::findGasGasEvent(double dt) const
+{
+	SimEvent firstSimEvent, newSimEvent;
+	firstSimEvent.relTime = dt * 2.0;
+	for (int i = 0; i < gasParticles.size(); i++)
+	{
+		newSimEvent = findFirstGasCollision(i, dt);
+		if ((newSimEvent.relTime > 0.0) && (newSimEvent.relTime < firstSimEvent.relTime))
+			firstSimEvent = newSimEvent;
+	}
+	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime <= dt))
+		return firstSimEvent;
+	return SimEvent();
+}
+
 //
 SimEvent Simulation::findFirstContainerCollision(int gasPointIndex, double dt) const
 {
@@ -367,6 +395,21 @@ SimEvent Simulation::findFirstContainerCollision(int gasPointIndex, double dt) c
 			if ( (newSimEvent.relTime > 0.0) && (newSimEvent.relTime < firstSimEvent.relTime))
 				firstSimEvent = newSimEvent;
 		}
+	}
+	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime <= dt))
+		return firstSimEvent;
+	return SimEvent();
+}
+
+SimEvent Simulation::findFirstGasCollision(int gasPointIndex, double dt) const
+{
+	SimEvent firstSimEvent, newSimEvent;
+	firstSimEvent.relTime = dt * 2.0;
+	for (int i = gasPointIndex + 1; i < gasParticles.size(); i++)
+	{
+		newSimEvent = findGasGasCollision(gasPointIndex,i, dt);
+		if ((newSimEvent.relTime > 0.0) && (newSimEvent.relTime < firstSimEvent.relTime))
+			firstSimEvent = newSimEvent;
 	}
 	if ((firstSimEvent.relTime > 0.0) && (firstSimEvent.relTime <= dt))
 		return firstSimEvent;
@@ -451,6 +494,70 @@ SimEvent Simulation::findTriangleCollision(int gasPointIndex, int volumeIndex, i
 	return SimEvent();
 }
 
+SimEvent Simulation::findGasGasCollision(int firstGasParticleIndex, int secondGasParticleIndex, double dt) const
+{
+	GasParticle p1, p2;
+	SimEvent simEvent;
+	p1 = gasParticles[firstGasParticleIndex];
+	p2 = gasParticles[secondGasParticleIndex];
+	Box b1, b2;
+	if (
+		(p1.box.min.X > p2.box.max.X) || (p1.box.max.X < p2.box.min.X) ||
+		(p1.box.min.Y > p2.box.max.Y) || (p1.box.max.Y < p2.box.min.Y) ||
+		(p1.box.min.Z > p2.box.max.Z) || (p1.box.max.Z < p2.box.min.Z)
+		)
+		return SimEvent();
+	double a = (p1.speed.X - p2.speed.X) * (p1.speed.X - p2.speed.X) +
+		(p1.speed.Y - p2.speed.Y) * (p1.speed.Y - p2.speed.Y) +
+		(p1.speed.Z - p2.speed.Z) * (p1.speed.Z - p2.speed.Z);
+	double b = 2 * (
+		(p1.position.X - p2.position.X) * (p1.speed.X - p2.speed.X) +
+		(p1.position.Y - p2.position.Y) * (p1.speed.Y - p2.speed.Y) +
+		(p1.position.Z - p2.position.Z) * (p1.speed.Z - p2.speed.Z)
+		);
+	double c = (p1.position.X - p2.position.X) * (p1.position.X - p2.position.X) +
+		(p1.position.Y - p2.position.Y) * (p1.position.Y - p2.position.Y) +
+		(p1.position.Z - p2.position.Z) * (p1.position.Z - p2.position.Z) -
+		simSettings.gasRadius * simSettings.gasRadius;
+	double delta = b * b - 4 * a * c;
+	if (delta >= 0)
+	{
+		double t1 = (-b - sqrt(delta)) / (2 * a);
+		double t2 = (-b + sqrt(delta)) / (2 * a);
+		if ((t1 >= 0) && (t1 < dt))
+		{
+			simEvent.eventType = EventType::gasGasCollision;
+			simEvent.relTime = t1;
+			simEvent.index1 = firstGasParticleIndex;
+			simEvent.index2 = secondGasParticleIndex;
+			simEvent.position1 = p1.position + p1.speed * t1;
+			simEvent.position2 = p2.position + p2.speed * t1;
+			return simEvent;
+		}
+		else
+		{
+			if ((t2 >= 0) && (t2 < dt))
+			{
+				simEvent.eventType = EventType::gasGasCollision;
+				simEvent.relTime = t2;
+				simEvent.index1 = firstGasParticleIndex;
+				simEvent.index2 = secondGasParticleIndex;
+				simEvent.position1 = p1.position + p1.speed * t2;
+				simEvent.position2 = p2.position + p2.speed * t2;
+				return simEvent;
+			}
+			else
+			{
+				return SimEvent();
+			}
+		}
+	}
+	else
+	{
+		return SimEvent();
+	}
+}
+
 bool Simulation::performEvent(SimEvent simEvent, double dt)
 {
 	EventType eventType = simEvent.eventType;
@@ -458,9 +565,12 @@ bool Simulation::performEvent(SimEvent simEvent, double dt)
 	{
 	case EventType::gasMeshCollision:
 		//Beep(1000, 100);
-		preformGasMeshCollision(simEvent);
+		performGasMeshCollision(simEvent);
 		break;// TODO
 	case EventType::gasGasCollision:
+		Beep(1000, 100);
+		//performNullEvent(simEvent, dt);
+		performGasGasCollision(simEvent);
 		break;// TODO
 	case EventType::gasSbCollision:
 		break;// TODO
@@ -476,7 +586,7 @@ bool Simulation::performEvent(SimEvent simEvent, double dt)
 	return false;// TODO return true
 }
 
-bool Simulation::preformGasMeshCollision(SimEvent simEvent)
+bool Simulation::performGasMeshCollision(SimEvent simEvent)
 {
 	double dt = simEvent.relTime;
 	GasParticle particle = gasParticles[simEvent.index1];
@@ -505,7 +615,6 @@ bool Simulation::preformGasMeshCollision(SimEvent simEvent)
 	}
 	else
 	{
-		//////////////////////////////std::cout << ":::::::" << dPotential << std::endl;
 		vSpeedN = vSpeedN / abs(vSpeedN) * sqrt(2.0 * (cEnergyN - dPotential));// particle loses energy if dPotential > 0
 		particle.speed = vSpeedN + otherComponent;
 		//particle.potential = externPotential;
@@ -521,12 +630,53 @@ bool Simulation::preformGasMeshCollision(SimEvent simEvent)
 	return false;// TODO return true
 }
 
-bool Simulation::gasPositionIncrement(double dt, int exI = -1)
+bool Simulation::performGasGasCollision(SimEvent simEvent)
 {
+	double dt = simEvent.relTime;
+	GasParticle p1 = gasParticles[simEvent.index1];
+	GasParticle p2 = gasParticles[simEvent.index2];
+	
+	gasPositionIncrement(dt, simEvent.index1, simEvent.index2);
+
+	Vector3 N = p2.position - p1.position;	N = N / abs(N);// unit vector from the first to the second point
+	if ((N.Y != N.Y) || (N.X != N.X)) {
+		std::cout << ":::::::::::::::::::::::::::::::::::::::" << p1.position.Y << "\t" << p2.position.Y << std::endl;
+		Beep(2500, 5000);
+	}
+	double
+		v1n = p1.speed * N,// component along N direction of the first speed
+		v2n = p2.speed * N;
+	Vector3
+		v1r = p1.speed - N * v1n,// the component of the speed we are not interested in
+		v2r = p2.speed - N * v2n;
+	
+	// now, using the elastic collision equations...
+	p1.speed = v1r + N * v2n;
+	p2.speed = v2r + N * v1n;
+	
+	// now the position increment
+	p1.position = simEvent.position1 + p1.speed * (dt * Epsilon);
+	p2.position = simEvent.position2 + p2.speed * (dt * Epsilon);
+
+	// now assign new values...
+	gasParticles[simEvent.index1] = p1;
+	gasParticles[simEvent.index2] = p2;
+
+	
+	return false;
+}
+
+bool Simulation::gasPositionIncrement(double dt, int exI1, int exI2)
+{
+	/*
 	for (int i = 0; i < exI; i++)
 		gasParticles[i].position += gasParticles[i].speed * dt;
 	for (int i = exI + 1; i < gasParticles.size(); i++)
 		gasParticles[i].position += gasParticles[i].speed * dt;
+		*/
+	for (int i = 0; i < gasParticles.size(); i++)
+		if ((i != exI1) || (i != exI2))
+			gasParticles[i].position += gasParticles[i].speed * dt;
 	//std::cout << dt << std::endl;
 	//std::cout << "ciaoooooooooooooooooooo" << std::endl;
 	return true;
@@ -538,6 +688,21 @@ bool Simulation::performNullEvent(SimEvent simEvent, double dt)
 	gasPositionIncrement(dt);// increment position except for interested particle
 	// TODO SB position and speed increment
 	return false;
+}
+
+void Simulation::calculateBoxes(void)
+{
+	for (int i = 0; i < simSettings.gasPointsNumber; i++)
+	{
+		GasParticle p1 = gasParticles[i];
+		p1.box.max.X = fmax(p1.position.X, p1.position.X + p1.speed.X);
+		p1.box.max.Y = fmax(p1.position.Y, p1.position.Y + p1.speed.Y);
+		p1.box.max.Z = fmax(p1.position.Z, p1.position.Z + p1.speed.Z);
+		p1.box.min.X = fmin(p1.position.X, p1.position.X + p1.speed.X);
+		p1.box.min.Y = fmin(p1.position.Y, p1.position.Y + p1.speed.Y);
+		p1.box.min.Z = fmin(p1.position.Z, p1.position.Z + p1.speed.Z);
+		gasParticles[i].box = p1.box;
+	}
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -631,7 +796,18 @@ void Simulation::printxyz(int i) const
 	std::cout
 		<< gasParticles[i].position.X << ", "
 		<< gasParticles[i].position.Y << ", "
-		<< gasParticles[i].position.Z << std::endl
+		<< gasParticles[i].position.Z << "," 
+		<< getAverageKEnergy() << std::endl
 		//<< "pot:  " << gasParticles[i].potential << ", "
 		;
+}
+
+void Simulation::printspeeds(void) const
+{
+	for (int i = 0; i < gasParticles.size(); i++) {
+		std::cout <<
+			gasParticles[i].speed.X * gasParticles[i].speed.X +
+			gasParticles[i].speed.Y * gasParticles[i].speed.Y +
+			gasParticles[i].speed.Z * gasParticles[i].speed.Z << std::endl;
+	}
 }

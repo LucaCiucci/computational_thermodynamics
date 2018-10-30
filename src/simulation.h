@@ -206,13 +206,14 @@ struct GasParticle {
 	double potential = 0;
 	Vector3 position;
 	Vector3 speed;
+	Box box;
 };
 
 
 
 struct SimulationSettings {
 	double dt = 0.01;// max step dt
-	double gasRadius = 0.001;// particles will collide when distance = 2 * gasRadius
+	double gasRadius = 0.051;// particles will collide when distance = 2 * gasRadius
 	double sbRadius = 0.001;// radius of the softbody particles
 	double finalTime = -1;// simulation end time, -1 to disable
 	int maxStepNumber = 10;// maximum number of simulation steps
@@ -255,6 +256,7 @@ public:
 	int getVolumesNumber(void) const;
 	void setGasParticleNumber(int);
 	int getGasParticleNumber(void) const;
+	double getAverageKEnergy(void) const;
 	void setInitialTemperature(double);
 	double getInitialTemperature(void) const;
 	double getDt(void) const;
@@ -268,6 +270,7 @@ public:
 	void printPoints(void) const;
 	void test(void) const;
 	void printxyz(int) const;
+	void printspeeds(void) const;
 
 private:
 	bool isInsideVolume(Vector3, int) const;// (point, volume index)
@@ -283,18 +286,23 @@ private:
 	bool simulateInTimeInterval(double);// (dt)
 	SimEvent findFirstEvent(double) const;
 	SimEvent findGasMeshEvent(double) const;
+	SimEvent findGasGasEvent(double) const;
 	SimEvent findFirstContainerCollision(int, double) const;
+	SimEvent findFirstGasCollision(int, double) const;
 	SimEvent findFirstTriangleCollision(int, int, double) const;
 	SimEvent findTriangleCollision(int, int, int, double) const;
+	SimEvent findGasGasCollision(int, int, double) const;
 	//SimEvent findGasGasEvent(double) const;
 	bool performEvent(SimEvent, double);
-	bool preformGasMeshCollision(SimEvent);
-	bool gasPositionIncrement(double, int);
+	bool performGasMeshCollision(SimEvent);
+	bool performGasGasCollision(SimEvent);
+	bool gasPositionIncrement(double, int = -1, int = -1);
 	bool performNullEvent(SimEvent, double);
+	void calculateBoxes(void);
 	
 	
-	double temperature = 1;
-	double GasParticleNumber = 10;
+	//double temperature = 1;
+	//double GasParticleNumber = 10;
 	SimulationSettings simSettings;
 	std::vector<Volume> volumes;
 	std::vector<GasParticle> gasParticles;

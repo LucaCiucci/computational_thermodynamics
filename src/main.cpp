@@ -22,6 +22,8 @@ bool loadVolumes(objl::Loader, Simulation*, std::vector<double>);
 
 int main(/*int argc, char *argv[]*/)
 {
+	std::cout << SimEvent().position1.X << std::endl;
+
     /*QCoreApplication a(argc, argv);
 
     return a.exec();*/
@@ -47,20 +49,25 @@ int main(/*int argc, char *argv[]*/)
 	//simulation.printVertex(0);// useful
 	//simulation.printPlanes(0);// useful
 	std::cout << "\n\n\n\n\n";
-	simulation.setGasParticleNumber(50);
+	simulation.setGasParticleNumber(1000);
 	simulation.setInitialTemperature(1);
 	simulation.createGasParticles();
 	simulation.test();
 	simulation.printPoints();// useful
-	simulation.setDt(0.5);
-	for (int i = 0; i < 50000; i++) {
+	simulation.setDt(1.05);
+	for (int i = 0; i < 500; i++) {
 		simulation.performOneStep();
 		//simulation.printPoints();
 		//std::cout << simulation.getDt() << std::endl;
 		//Sleep(500);
-		simulation.printxyz(1);
+		simulation.printxyz(0);
+		std::cout << "-----------------------------  i = " << i << std::endl;
+		//simulation.printspeeds();
+		std::cout << "last  i = " << i << std::endl;
 		//Beep(2000, 50);
 	}
+	std::cout << "-----------------------------" << std::endl;
+	simulation.printspeeds();
 	return 0;
 }
 
